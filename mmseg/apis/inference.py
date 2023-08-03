@@ -110,7 +110,8 @@ def _preprare_data(imgs: ImageType, model: BaseSegmentor):
 
     # TODO: Consider using the singleton pattern to avoid building
     # a pipeline for each inference
-    pipeline = Compose(cfg.test_pipeline)
+    # pipeline = Compose(cfg.test_pipeline)
+    pipeline = singleton_wrapper(Compose, cfg.test_pipeline)
 
     data = defaultdict(list)
     for img in imgs:
@@ -193,7 +194,12 @@ def show_result_pyplot(model: BaseSegmentor,
     if save_dir is not None:
         mkdir_or_exist(save_dir)
     # init visualizer
-    visualizer = SegLocalVisualizer(
+    # visualizer = SegLocalVisualizer(
+    #     vis_backends=[dict(type='LocalVisBackend')],
+    #     save_dir=save_dir,
+    #     alpha=opacity)
+    visualizer = singleton_wrapper(
+        SegLocalVisualizer,
         vis_backends=[dict(type='LocalVisBackend')],
         save_dir=save_dir,
         alpha=opacity)
@@ -212,3 +218,9 @@ def show_result_pyplot(model: BaseSegmentor,
     vis_img = visualizer.get_image()
 
     return vis_img
+
+
+def singleton_wrapper(cls, *args, **kwargs):
+    if not hasattr(cls, '__single_instance'):
+        setattr(cls, '__single_instance', cls(*args, **kwargs))
+    return getattr(cls, '__single_instance')
